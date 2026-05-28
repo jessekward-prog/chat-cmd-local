@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>oracle</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0d0900;
+      --amber: #e8a020;
+      --amber-dim: #6b4a10;
+      --amber-faint: #1a1000;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--amber);
+      font-family: 'Courier New', monospace;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.06) 2px,
+        rgba(0,0,0,0.06) 4px
+      );
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    #answer {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 6rem;
+      font-size: clamp(1.1rem, 3vw, 2.6rem);
+      line-height: 1.6;
+      text-align: center;
+      white-space: pre-wrap;
+      overflow-y: auto;
+    }
+
+    #answer.empty { color: var(--amber-dim); font-size: 1.2rem; }
+
+    #answer.loading {
+      animation: flicker 1.2s ease-in-out infinite;
+    }
+
+    @keyframes flicker {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    #input-area {
+      border-top: 1px solid var(--amber-dim);
+      padding: 0.9rem 2rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      background: var(--amber-faint);
+    }
+
+    #prompt {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--amber);
+      font-family: inherit;
+      font-size: 1rem;
+      outline: none;
+      caret-color: var(--amber);
+    }
+
+    #prompt::placeholder { color: var(--amber-dim); }
+
+    button {
+      background: transparent;
+      border: 1px solid var(--amber-dim);
+      color: var(--amber-dim);
+      font-family: inherit;
+      font-size: 0.85rem;
+      padding: 0.35rem 1rem;
+      cursor: pointer;
+      letter-spacing: 0.1em;
+      text-transform: lowercase;
+      transition: border-color 0.1s, color 0.1s;
+    }
+
+    button:hover:not(:disabled) {
+      border-color: var(--amber);
+      color: var(--amber);
+    }
+
+    button:disabled { opacity: 0.2; cursor: default; }
+  </style>
+</head>
+<body>
+  <div id="answer" class="empty">ask something</div>
+  <div id="input-area">
+    <input id="prompt" type="text" placeholder="type here...">
+    <button id="send-btn">send</button>
+  </div>
+
+  <script>
+    const answerEl = document.getElementById('answer');
+    const promptEl = document.getElementById('prompt');
+    const sendBtn = document.getElementById('send-btn');
+    const history = [];
+
+    sendBtn.addEventListener('click', send);
+    promptEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter') send();
+    });
+
+    async function send() {
+      const text = promptEl.value.trim();
+      if (!text || sendBtn.disabled) return;
+
+      history.push({ role: 'user', content: text });
+      promptEl.value = '';
+      sendBtn.disabled = true;
+      answerEl.className = 'loading';
+      answerEl.textContent = '...';
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: history }),
+        });
+        const { content } = await res.json();
+        history.push({ role: 'assistant', content });
+        answerEl.className = '';
+        answerEl.textContent = content;
+      } catch {
+        answerEl.className = 'empty';
+        answerEl.textContent = 'error — is lm studio running?';
+      } finally {
+        sendBtn.disabled = false;
+        promptEl.focus();
+      }
+    }
+  </script>
+</body>
+</html>
