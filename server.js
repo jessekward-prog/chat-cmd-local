@@ -13,7 +13,7 @@ const MODEL = process.env.LM_STUDIO_MODEL || '';
 
 const SYSTEM_PROMPT = {
   role: 'system',
-  content: 'You are a friendly helper for a 6-year-old child. Always give very short answers — 2 or 3 simple sentences at most. Use easy words that a young child would understand. Never use big or complicated words.',
+  content: 'You are a friendly, curious helper. Always give short answers — 3 or 4 sentences at most. Give the real explanation, not just a surface description. Use clear language and simple comparisons where helpful, but never skip the actual reason something works the way it does.',
 };
 
 app.post('/api/chat', async (req, res) => {
