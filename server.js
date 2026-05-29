@@ -11,10 +11,15 @@ app.use(express.static(join(__dirname, 'public')));
 const BASE_URL = process.env.LM_STUDIO_BASE_URL || 'http://localhost:1234';
 const MODEL = process.env.LM_STUDIO_MODEL || '';
 
+const SYSTEM_PROMPT = {
+  role: 'system',
+  content: 'You are a friendly helper for a 6-year-old child. Always give very short answers — 2 or 3 simple sentences at most. Use easy words that a young child would understand. Never use big or complicated words.',
+};
+
 app.post('/api/chat', async (req, res) => {
   const { messages } = req.body;
 
-  const body = { messages, stream: false };
+  const body = { messages: [SYSTEM_PROMPT, ...messages], stream: false };
   if (MODEL) body.model = MODEL;
 
   const upstream = await fetch(`${BASE_URL}/v1/chat/completions`, {
