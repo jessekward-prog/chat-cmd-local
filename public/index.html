@@ -43,9 +43,10 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 2rem 4rem;
+      padding: 2rem 4rem 0.5rem;
       position: relative;
       z-index: 1;
+      min-height: 0;
     }
 
     #mascot {
@@ -71,7 +72,7 @@
     #answer {
       background: white;
       border-radius: 2rem;
-      padding: 2rem 3rem;
+      padding: 1.5rem 2.5rem;
       max-width: 800px;
       width: 100%;
       font-size: clamp(1.2rem, 3.2vw, 2.4rem);
@@ -92,58 +93,89 @@
       border-style: dashed;
     }
 
-    #input-area {
-      padding: 1rem 2rem 1.4rem;
+    /* ── mic area ── */
+    #mic-area {
+      padding: 1rem 2rem calc(1.4rem + env(safe-area-inset-bottom, 0px));
       display: flex;
-      gap: 0.75rem;
+      flex-direction: column;
       align-items: center;
+      gap: 0.6rem;
       position: relative;
       z-index: 1;
     }
 
-    #prompt {
-      flex: 1;
-      background: white;
-      border: 3px solid #ffd166;
-      border-radius: 999px;
-      padding: 0.75rem 1.4rem;
-      color: #2d2d2d;
-      font-family: inherit;
-      font-size: 1.1rem;
+    #question {
+      font-size: clamp(0.85rem, 2.5vw, 1.05rem);
       font-weight: 700;
-      outline: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
+      color: #b07a40;
+      min-height: 1.3em;
+      text-align: center;
+      max-width: 40ch;
+      opacity: 0.85;
     }
 
-    #prompt:focus {
-      border-color: #ff9a3c;
-      box-shadow: 0 0 0 3px rgba(255, 154, 60, 0.2);
-    }
-
-    #prompt::placeholder { color: #ccc; font-weight: 400; }
-
-    button {
-      background: linear-gradient(135deg, #ff9a3c, #ff6b6b);
+    .mic-btn {
+      width: clamp(110px, 30vw, 170px);
+      height: clamp(110px, 30vw, 170px);
+      border-radius: 50%;
       border: none;
-      border-radius: 999px;
-      color: white;
-      font-family: inherit;
-      font-size: 1rem;
-      font-weight: 900;
-      padding: 0.75rem 1.6rem;
+      background: radial-gradient(circle at 35% 30%,
+        color-mix(in srgb, #ff9a3c 60%, white),
+        #ff9a3c 65%,
+        #d4661a);
+      box-shadow: 0 10px 0 #d4661a, 0 16px 28px rgba(255, 107, 107, 0.4);
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.35);
-      transition: transform 0.1s, box-shadow 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.2s ease;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
 
-    button:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(255, 107, 107, 0.45);
+    .mic-btn svg {
+      width: 48%;
+      height: 48%;
+      fill: white;
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
     }
 
-    button:active:not(:disabled) { transform: translateY(0); }
+    .mic-btn.holding {
+      transform: translateY(7px);
+      box-shadow: 0 3px 0 #1a7d6e, 0 5px 14px rgba(78, 205, 196, 0.3);
+      background: radial-gradient(circle at 35% 30%,
+        color-mix(in srgb, #4ecdc4 50%, white),
+        #4ecdc4 65%,
+        #1a7d6e);
+      animation: pulse 1.2s ease-in-out infinite;
+    }
 
-    button:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
+    .mic-btn:disabled {
+      opacity: 0.4;
+      cursor: default;
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 3px 0 #1a7d6e, 0 0 0 0 rgba(78, 205, 196, 0.5); }
+      50%       { box-shadow: 0 3px 0 #1a7d6e, 0 0 0 20px rgba(78, 205, 196, 0); }
+    }
+
+    #status {
+      font-size: clamp(0.8rem, 2.5vw, 1rem);
+      color: #b07a40;
+      min-height: 1.3em;
+      text-align: center;
+      opacity: 0.7;
+    }
+
+    #status.error { color: #c0392b; opacity: 1; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .mic-btn.holding { animation: none; }
+      * { transition: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -151,19 +183,27 @@
 
   <div id="answer-wrap">
     <div id="mascot">🌟</div>
-    <div id="answer" class="empty">ask me anything!</div>
+    <div id="answer" class="empty">Hold the button and ask me anything!</div>
   </div>
 
-  <div id="input-area">
-    <input id="prompt" type="text" placeholder="what do you want to know?">
-    <button id="send-btn">Ask!</button>
+  <div id="mic-area">
+    <p id="question"></p>
+    <button id="mic" class="mic-btn" aria-label="Hold to ask">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/>
+      </svg>
+    </button>
+    <p id="status"></p>
   </div>
 
   <script>
-    const answerEl = document.getElementById('answer');
-    const promptEl = document.getElementById('prompt');
-    const sendBtn = document.getElementById('send-btn');
-    const mascotEl = document.getElementById('mascot');
+  (() => {
+    const answerEl  = document.getElementById('answer');
+    const mascotEl  = document.getElementById('mascot');
+    const micEl     = document.getElementById('mic');
+    const statusEl  = document.getElementById('status');
+    const questionEl = document.getElementById('question');
+
     const history = [];
     const mascots = ['🌟', '🦄', '🐬', '🦋', '🌈', '🐙', '🦊', '🐸'];
 
@@ -177,19 +217,49 @@
       starsEl.appendChild(s);
     }
 
-    sendBtn.addEventListener('click', send);
-    promptEl.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+    // ── Piper TTS ────────────────────────────────────────────
+    let currentAudio = null;
 
-    async function send() {
-      const text = promptEl.value.trim();
-      if (!text || sendBtn.disabled) return;
+    const cancelAudio = () => {
+      if (currentAudio) {
+        currentAudio.pause();
+        URL.revokeObjectURL(currentAudio.src);
+        currentAudio = null;
+      }
+    };
 
+    const speakResponse = async (text) => {
+      cancelAudio();
+      try {
+        const resp = await fetch('/api/speak', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        });
+        if (!resp.ok) return;
+        const url = URL.createObjectURL(await resp.blob());
+        const audio = new Audio(url);
+        currentAudio = audio;
+        audio.onended = () => { URL.revokeObjectURL(url); currentAudio = null; };
+        audio.onerror = () => { URL.revokeObjectURL(url); currentAudio = null; };
+        audio.play().catch(() => {});
+      } catch (_) {}
+    };
+
+    // ── Send to API ───────────────────────────────────────────
+    const setStatus = (msg, isError = false) => {
+      statusEl.textContent = msg || '';
+      statusEl.classList.toggle('error', isError);
+    };
+
+    async function send(text) {
+      if (!text) return;
       history.push({ role: 'user', content: text });
-      promptEl.value = '';
-      sendBtn.disabled = true;
       answerEl.className = 'loading';
       answerEl.textContent = '...';
       mascotEl.className = 'thinking';
+      micEl.disabled = true;
+      setStatus('Thinking...');
 
       try {
         const res = await fetch('/api/chat', {
@@ -203,15 +273,130 @@
         answerEl.textContent = content;
         mascotEl.className = '';
         mascotEl.textContent = mascots[Math.floor(Math.random() * mascots.length)];
+        setStatus('');
+        speakResponse(content);
       } catch {
         answerEl.className = 'empty';
         answerEl.textContent = 'oops! something went wrong.';
         mascotEl.className = '';
+        setStatus('Something went wrong', true);
       } finally {
-        sendBtn.disabled = false;
-        promptEl.focus();
+        micEl.disabled = false;
       }
     }
+
+    // ── Speech recognition ───────────────────────────────────
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SR) {
+      setStatus('Speech not supported — try Chrome or Safari', true);
+      micEl.disabled = true;
+      return;
+    }
+
+    let recognition = null;
+    let holding = false;
+    let listening = false;
+    let gotResult = false;
+    let restarted = false;
+
+    const createRecognition = () => {
+      const sr = new SR();
+      sr.lang = 'en-AU';
+      sr.continuous = false;
+      sr.interimResults = false;
+      sr.maxAlternatives = 1;
+
+      sr.onstart = () => { listening = true; setStatus('Listening...'); };
+
+      sr.onresult = (e) => {
+        gotResult = true;
+        const transcript = e.results[0]?.[0]?.transcript;
+        if (transcript) {
+          questionEl.textContent = transcript;
+          holding = false;
+          micEl.classList.remove('holding');
+          send(transcript);
+        }
+      };
+
+      sr.onerror = (e) => {
+        listening = false;
+        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+          holding = false;
+          micEl.classList.remove('holding');
+          recognition = null;
+          setStatus('Microphone blocked — check browser settings', true);
+        } else if (e.error === 'no-speech') {
+          setStatus("Didn't hear anything — try again");
+        } else if (e.error !== 'aborted') {
+          setStatus('Mic error: ' + e.error, true);
+          recognition = null;
+        }
+      };
+
+      sr.onend = () => {
+        listening = false;
+        if (holding && !gotResult && !restarted) {
+          restarted = true;
+          try { sr.start(); } catch (_) { recognition = null; }
+          return;
+        }
+        holding = false;
+        micEl.classList.remove('holding');
+        if (!gotResult) setStatus("Didn't catch that — try again");
+      };
+
+      return sr;
+    };
+
+    const startListening = () => {
+      if (listening) return;
+      cancelAudio();
+      gotResult = false;
+      restarted = false;
+      if (!recognition) recognition = createRecognition();
+      try {
+        recognition.start();
+      } catch (_) {
+        recognition = createRecognition();
+        try { recognition.start(); } catch (__) {
+          holding = false;
+          micEl.classList.remove('holding');
+          setStatus('Tap again to try', true);
+        }
+      }
+    };
+
+    const stopListening = () => {
+      if (!recognition) return;
+      try { recognition.stop(); } catch (_) {}
+    };
+
+    micEl.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      if (holding || micEl.disabled) return;
+      holding = true;
+      micEl.classList.add('holding');
+      if (e.pointerId !== undefined && micEl.setPointerCapture) {
+        try { micEl.setPointerCapture(e.pointerId); } catch (_) {}
+      }
+      if (navigator.vibrate) navigator.vibrate(15);
+      setStatus('');
+      startListening();
+    });
+
+    const onRelease = (e) => {
+      if (e) e.preventDefault();
+      if (!holding) return;
+      holding = false;
+      stopListening();
+    };
+
+    micEl.addEventListener('pointerup', onRelease);
+    micEl.addEventListener('pointercancel', onRelease);
+    micEl.addEventListener('contextmenu', (e) => e.preventDefault());
+  })();
   </script>
 </body>
 </html>
