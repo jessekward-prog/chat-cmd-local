@@ -1,13 +1,14 @@
 FROM node:20-bookworm-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-pip \
-    && pip3 install --break-system-packages piper-tts huggingface_hub \
-    && python3 -c "\
-from huggingface_hub import hf_hub_download; \
-[hf_hub_download('rhasspy/piper-voices', f'en/en_GB/cori/high/{f}', local_dir='/app/voices', repo_type='model') \
- for f in ['en_GB-cori-high.onnx', 'en_GB-cori-high.onnx.json']]" \
-    && rm -rf /var/lib/apt/lists/* /root/.cache
+    python3 python3-pip wget \
+    && pip3 install --break-system-packages piper-tts \
+    && mkdir -p /app/voices/en/en_GB/cori/high \
+    && wget -q -O /app/voices/en/en_GB/cori/high/en_GB-cori-high.onnx \
+       "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/cori/high/en_GB-cori-high.onnx" \
+    && wget -q -O /app/voices/en/en_GB/cori/high/en_GB-cori-high.onnx.json \
+       "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/cori/high/en_GB-cori-high.onnx.json" \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY package*.json ./
