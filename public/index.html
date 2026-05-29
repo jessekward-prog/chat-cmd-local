@@ -3,126 +3,182 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>oracle</title>
+  <title>Ask Away!</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    :root {
-      --bg: #0d0900;
-      --amber: #e8a020;
-      --amber-dim: #6b4a10;
-      --amber-faint: #1a1000;
-    }
-
     body {
-      background: var(--bg);
-      color: var(--amber);
-      font-family: 'Courier New', monospace;
+      background: #fff7f0;
+      font-family: 'Nunito', sans-serif;
       height: 100dvh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
 
-    body::after {
-      content: '';
+    #stars {
       position: fixed;
       inset: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,0.06) 2px,
-        rgba(0,0,0,0.06) 4px
-      );
       pointer-events: none;
-      z-index: 999;
+      z-index: 0;
+    }
+
+    .star {
+      position: absolute;
+      border-radius: 50%;
+      background: #ffd166;
+      opacity: 0.5;
+      animation: twinkle 3s ease-in-out infinite;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { transform: scale(1); opacity: 0.3; }
+      50% { transform: scale(1.4); opacity: 0.7; }
+    }
+
+    #answer-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 4rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    #mascot {
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      margin-bottom: 1.2rem;
+      animation: bounce 2.5s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    #mascot.thinking {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
 
     #answer {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 3rem 6rem;
-      font-size: clamp(1.1rem, 3vw, 2.6rem);
-      line-height: 1.6;
+      background: white;
+      border-radius: 2rem;
+      padding: 2rem 3rem;
+      max-width: 800px;
+      width: 100%;
+      font-size: clamp(1.2rem, 3.2vw, 2.4rem);
+      font-weight: 700;
+      line-height: 1.5;
       text-align: center;
+      color: #2d2d2d;
       white-space: pre-wrap;
       overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(255, 150, 50, 0.15), 0 2px 8px rgba(0,0,0,0.06);
+      border: 3px solid #ffe0b2;
     }
 
-    #answer.empty { color: var(--amber-dim); font-size: 1.2rem; }
-
-    #answer.loading {
-      animation: flicker 1.2s ease-in-out infinite;
-    }
-
-    @keyframes flicker {
-      0%, 100% { opacity: 0.3; }
-      50% { opacity: 1; }
+    #answer.empty {
+      color: #bbb;
+      font-weight: 400;
+      font-size: clamp(1rem, 2vw, 1.4rem);
+      border-style: dashed;
     }
 
     #input-area {
-      border-top: 1px solid var(--amber-dim);
-      padding: 0.9rem 2rem;
+      padding: 1rem 2rem 1.4rem;
       display: flex;
-      gap: 1rem;
+      gap: 0.75rem;
       align-items: center;
-      background: var(--amber-faint);
+      position: relative;
+      z-index: 1;
     }
 
     #prompt {
       flex: 1;
-      background: transparent;
-      border: none;
-      color: var(--amber);
+      background: white;
+      border: 3px solid #ffd166;
+      border-radius: 999px;
+      padding: 0.75rem 1.4rem;
+      color: #2d2d2d;
       font-family: inherit;
-      font-size: 1rem;
+      font-size: 1.1rem;
+      font-weight: 700;
       outline: none;
-      caret-color: var(--amber);
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
 
-    #prompt::placeholder { color: var(--amber-dim); }
+    #prompt:focus {
+      border-color: #ff9a3c;
+      box-shadow: 0 0 0 3px rgba(255, 154, 60, 0.2);
+    }
+
+    #prompt::placeholder { color: #ccc; font-weight: 400; }
 
     button {
-      background: transparent;
-      border: 1px solid var(--amber-dim);
-      color: var(--amber-dim);
+      background: linear-gradient(135deg, #ff9a3c, #ff6b6b);
+      border: none;
+      border-radius: 999px;
+      color: white;
       font-family: inherit;
-      font-size: 0.85rem;
-      padding: 0.35rem 1rem;
+      font-size: 1rem;
+      font-weight: 900;
+      padding: 0.75rem 1.6rem;
       cursor: pointer;
-      letter-spacing: 0.1em;
-      text-transform: lowercase;
-      transition: border-color 0.1s, color 0.1s;
+      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.35);
+      transition: transform 0.1s, box-shadow 0.1s;
     }
 
     button:hover:not(:disabled) {
-      border-color: var(--amber);
-      color: var(--amber);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(255, 107, 107, 0.45);
     }
 
-    button:disabled { opacity: 0.2; cursor: default; }
+    button:active:not(:disabled) { transform: translateY(0); }
+
+    button:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
   </style>
 </head>
 <body>
-  <div id="answer" class="empty">ask something</div>
+  <div id="stars"></div>
+
+  <div id="answer-wrap">
+    <div id="mascot">🌟</div>
+    <div id="answer" class="empty">ask me anything!</div>
+  </div>
+
   <div id="input-area">
-    <input id="prompt" type="text" placeholder="type here...">
-    <button id="send-btn">send</button>
+    <input id="prompt" type="text" placeholder="what do you want to know?">
+    <button id="send-btn">Ask!</button>
   </div>
 
   <script>
     const answerEl = document.getElementById('answer');
     const promptEl = document.getElementById('prompt');
     const sendBtn = document.getElementById('send-btn');
+    const mascotEl = document.getElementById('mascot');
     const history = [];
+    const mascots = ['🌟', '🦄', '🐬', '🦋', '🌈', '🐙', '🦊', '🐸'];
+
+    // Scatter background stars
+    const starsEl = document.getElementById('stars');
+    for (let i = 0; i < 18; i++) {
+      const s = document.createElement('div');
+      s.className = 'star';
+      const size = 6 + Math.random() * 10;
+      s.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-delay:${Math.random()*3}s;animation-duration:${2+Math.random()*2}s`;
+      starsEl.appendChild(s);
+    }
 
     sendBtn.addEventListener('click', send);
-    promptEl.addEventListener('keydown', e => {
-      if (e.key === 'Enter') send();
-    });
+    promptEl.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
 
     async function send() {
       const text = promptEl.value.trim();
@@ -133,6 +189,7 @@
       sendBtn.disabled = true;
       answerEl.className = 'loading';
       answerEl.textContent = '...';
+      mascotEl.className = 'thinking';
 
       try {
         const res = await fetch('/api/chat', {
@@ -144,9 +201,12 @@
         history.push({ role: 'assistant', content });
         answerEl.className = '';
         answerEl.textContent = content;
+        mascotEl.className = '';
+        mascotEl.textContent = mascots[Math.floor(Math.random() * mascots.length)];
       } catch {
         answerEl.className = 'empty';
-        answerEl.textContent = 'error — is lm studio running?';
+        answerEl.textContent = 'oops! something went wrong.';
+        mascotEl.className = '';
       } finally {
         sendBtn.disabled = false;
         promptEl.focus();
