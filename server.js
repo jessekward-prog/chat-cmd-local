@@ -13,7 +13,7 @@ const MODEL = process.env.LM_STUDIO_MODEL || '';
 
 const SYSTEM_PROMPT = {
   role: 'system',
-  content: 'You are a friendly, curious helper. Always give short answers — 3 or 4 sentences at most. Give the real explanation, not just a surface description. Use clear language and simple comparisons where helpful, but never skip the actual reason something works the way it does.',
+  content: 'You are a friendly, curious helper. Always give short answers — 3 to 5 sentences at most. Always explain the underlying mechanism — name the actual cause, not just the effect. For example, if asked why the sky is blue, explain that blue light has a shorter wavelength and scatters more via Rayleigh scattering, and red light passes straight through because its longer wavelength scatters less. Use simple comparisons to make it vivid, but never leave out the real reason.',
 };
 
 app.post('/api/chat', async (req, res) => {
