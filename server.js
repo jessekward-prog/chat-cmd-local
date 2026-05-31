@@ -38,7 +38,7 @@ const toTwoSentences = (text) => {
 app.post('/api/chat', async (req, res) => {
   const { messages } = req.body;
 
-  const body = { messages: [SYSTEM_PROMPT_SHORT, ...messages], stream: false, max_tokens: 120 };
+  const body = { messages: [SYSTEM_PROMPT_SHORT, ...messages], stream: false, max_tokens: 1024 };
   if (MODEL) body.model = MODEL;
 
   const upstream = await fetch(`${BASE_URL}/v1/chat/completions`, {
@@ -58,7 +58,7 @@ app.post('/api/chat-more', async (req, res) => {
   const body = {
     messages: [SYSTEM_PROMPT_MORE, { role: 'user', content: question }],
     stream: false,
-    max_tokens: 300,
+    max_tokens: 2048,
   };
   if (MODEL) body.model = MODEL;
 
