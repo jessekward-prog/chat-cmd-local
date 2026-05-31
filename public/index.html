@@ -69,11 +69,17 @@
       to { transform: rotate(360deg); }
     }
 
+    /* answer box + bubble wrapper */
+    #answer-container {
+      position: relative;
+      max-width: 800px;
+      width: 100%;
+    }
+
     #answer {
       background: white;
       border-radius: 2rem;
       padding: 1.5rem 2.5rem;
-      max-width: 800px;
       width: 100%;
       font-size: clamp(1.2rem, 3.2vw, 2.4rem);
       font-weight: 700;
@@ -91,6 +97,63 @@
       font-weight: 400;
       font-size: clamp(1rem, 2vw, 1.4rem);
       border-style: dashed;
+    }
+
+    /* thought bubble */
+    #more-bubble {
+      display: none;
+      position: absolute;
+      right: -52px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: white;
+      border: 3px solid #ffe0b2;
+      box-shadow: 0 4px 16px rgba(255, 150, 50, 0.25);
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #ff9a3c;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      animation: bob 2s ease-in-out infinite;
+      z-index: 2;
+      /* tail dots via box-shadow */
+    }
+
+    #more-bubble::before,
+    #more-bubble::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      background: white;
+      border: 2.5px solid #ffe0b2;
+    }
+
+    #more-bubble::before {
+      width: 12px;
+      height: 12px;
+      left: -14px;
+      top: 55%;
+    }
+
+    #more-bubble::after {
+      width: 7px;
+      height: 7px;
+      left: -23px;
+      top: 65%;
+    }
+
+    @keyframes bob {
+      0%, 100% { transform: translateY(-50%); }
+      50%       { transform: translateY(calc(-50% - 8px)); }
+    }
+
+    #more-bubble:active {
+      transform: translateY(-50%) scale(0.92);
+      animation: none;
     }
 
     /* ── mic area ── */
@@ -112,6 +175,64 @@
       text-align: center;
       max-width: 40ch;
       opacity: 0.85;
+    }
+
+    /* text input row */
+    #text-input-row {
+      display: flex;
+      gap: 0.5rem;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    #text-input {
+      flex: 1;
+      border: 2.5px solid #ffe0b2;
+      border-radius: 2rem;
+      padding: 0.55rem 1.2rem;
+      font-family: 'Nunito', sans-serif;
+      font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+      font-weight: 700;
+      color: #2d2d2d;
+      background: white;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    #text-input:focus {
+      border-color: #ff9a3c;
+    }
+
+    #text-input::placeholder {
+      color: #ccc;
+      font-weight: 400;
+    }
+
+    #text-send {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: #ff9a3c;
+      color: white;
+      font-size: 1.3rem;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s, transform 0.08s;
+    }
+
+    #text-send:active {
+      transform: scale(0.92);
+      background: #d4661a;
+    }
+
+    #text-send:disabled {
+      opacity: 0.4;
+      cursor: default;
     }
 
     .mic-btn {
@@ -174,6 +295,7 @@
 
     @media (prefers-reduced-motion: reduce) {
       .mic-btn.holding { animation: none; }
+      #more-bubble { animation: none; }
       * { transition: none !important; }
     }
   </style>
@@ -183,11 +305,18 @@
 
   <div id="answer-wrap">
     <div id="mascot">🌟</div>
-    <div id="answer" class="empty">Hold the button and ask me anything!</div>
+    <div id="answer-container">
+      <div id="answer" class="empty">Hold the button and ask me anything!</div>
+      <button id="more-bubble" aria-label="Tell me more">?</button>
+    </div>
   </div>
 
   <div id="mic-area">
     <p id="question"></p>
+    <div id="text-input-row">
+      <input type="text" id="text-input" placeholder="Type a question..." autocomplete="off" />
+      <button id="text-send" aria-label="Send">&#8594;</button>
+    </div>
     <button id="mic" class="mic-btn" aria-label="Hold to ask">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/>
@@ -198,14 +327,18 @@
 
   <script>
   (() => {
-    const answerEl  = document.getElementById('answer');
-    const mascotEl  = document.getElementById('mascot');
-    const micEl     = document.getElementById('mic');
-    const statusEl  = document.getElementById('status');
-    const questionEl = document.getElementById('question');
+    const answerEl    = document.getElementById('answer');
+    const mascotEl    = document.getElementById('mascot');
+    const micEl       = document.getElementById('mic');
+    const statusEl    = document.getElementById('status');
+    const questionEl  = document.getElementById('question');
+    const moreBubble  = document.getElementById('more-bubble');
+    const textInput   = document.getElementById('text-input');
+    const textSend    = document.getElementById('text-send');
 
     const history = [];
     const mascots = ['🌟', '🦄', '🐬', '🦋', '🌈', '🐙', '🦊', '🐸'];
+    let lastQuestion = null;
 
     // Scatter background stars
     const starsEl = document.getElementById('stars');
@@ -217,7 +350,23 @@
       starsEl.appendChild(s);
     }
 
-    // ── Piper TTS ────────────────────────────────────────────
+    // ── Slow scroll ───────────────────────────────────────────
+    const slowScroll = (el) => {
+      const end = el.scrollHeight - el.clientHeight;
+      if (end <= 0) return;
+      const start = el.scrollTop;
+      const duration = 3500;
+      const t0 = performance.now();
+      const step = (now) => {
+        const p = Math.min((now - t0) / duration, 1);
+        const eased = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
+        el.scrollTop = start + eased * (end - start);
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    };
+
+    // ── Piper TTS ─────────────────────────────────────────────
     let currentAudio = null;
 
     const cancelAudio = () => {
@@ -246,21 +395,54 @@
       } catch (_) {}
     };
 
-    // ── Send to API ───────────────────────────────────────────
+    // ── Shared UI helpers ─────────────────────────────────────
     const setStatus = (msg, isError = false) => {
       statusEl.textContent = msg || '';
       statusEl.classList.toggle('error', isError);
     };
 
-    async function send(text) {
-      if (!text) return;
-      history.push({ role: 'user', content: text });
+    const setLoading = (statusMsg) => {
+      moreBubble.style.display = 'none';
       answerEl.className = 'loading';
       answerEl.textContent = '...';
       mascotEl.className = 'thinking';
       micEl.disabled = true;
-      setStatus('Thinking...');
+      textSend.disabled = true;
+      textInput.disabled = true;
+      setStatus(statusMsg);
+    };
 
+    const setDone = (content) => {
+      answerEl.className = '';
+      answerEl.scrollTop = 0;
+      answerEl.textContent = content;
+      mascotEl.className = '';
+      mascotEl.textContent = mascots[Math.floor(Math.random() * mascots.length)];
+      setStatus('');
+      micEl.disabled = false;
+      textSend.disabled = false;
+      textInput.disabled = false;
+      moreBubble.style.display = 'flex';
+      speakResponse(content);
+      setTimeout(() => slowScroll(answerEl), 800);
+    };
+
+    const setError = () => {
+      answerEl.className = 'empty';
+      answerEl.textContent = 'oops! something went wrong.';
+      mascotEl.className = '';
+      micEl.disabled = false;
+      textSend.disabled = false;
+      textInput.disabled = false;
+      setStatus('Something went wrong', true);
+    };
+
+    // ── Short answer ──────────────────────────────────────────
+    async function send(text) {
+      if (!text) return;
+      lastQuestion = text;
+      history.push({ role: 'user', content: text });
+      setLoading('Thinking...');
       try {
         const res = await fetch('/api/chat', {
           method: 'POST',
@@ -269,23 +451,45 @@
         });
         const { content } = await res.json();
         history.push({ role: 'assistant', content });
-        answerEl.className = '';
-        answerEl.textContent = content;
-        mascotEl.className = '';
-        mascotEl.textContent = mascots[Math.floor(Math.random() * mascots.length)];
-        setStatus('');
-        speakResponse(content);
+        setDone(content);
       } catch {
-        answerEl.className = 'empty';
-        answerEl.textContent = 'oops! something went wrong.';
-        mascotEl.className = '';
-        setStatus('Something went wrong', true);
-      } finally {
-        micEl.disabled = false;
+        setError();
       }
     }
 
-    // ── Speech recognition ───────────────────────────────────
+    // ── Tell me more ──────────────────────────────────────────
+    moreBubble.addEventListener('click', async () => {
+      if (!lastQuestion) return;
+      setLoading('Telling you more...');
+      try {
+        const res = await fetch('/api/chat-more', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: lastQuestion }),
+        });
+        const { content } = await res.json();
+        setDone(content);
+      } catch {
+        setError();
+      }
+    });
+
+    // ── Text input ────────────────────────────────────────────
+    const submitText = () => {
+      const text = textInput.value.trim();
+      if (!text || micEl.disabled) return;
+      questionEl.textContent = text;
+      textInput.value = '';
+      cancelAudio();
+      send(text);
+    };
+
+    textInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') submitText();
+    });
+    textSend.addEventListener('click', submitText);
+
+    // ── Speech recognition ────────────────────────────────────
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SR) {
@@ -316,6 +520,7 @@
           questionEl.textContent = transcript;
           holding = false;
           micEl.classList.remove('holding');
+          cancelAudio();
           send(transcript);
         }
       };
