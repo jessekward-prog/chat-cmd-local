@@ -4,6 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ask Away!</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="theme-color" content="#ff9a3c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Ask Away">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -293,6 +301,71 @@
 
     #status.error { color: #c0392b; opacity: 1; }
 
+    /* ── install prompt ── */
+    #install-prompt {
+      display: none;
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      border: 3px solid #ffe0b2;
+      border-radius: 1.5rem;
+      box-shadow: 0 8px 32px rgba(255,150,50,0.2);
+      padding: 1rem 1.4rem;
+      z-index: 100;
+      align-items: center;
+      gap: 1rem;
+      max-width: calc(100vw - 2rem);
+    }
+
+    #install-prompt.visible { display: flex; }
+
+    #install-prompt img {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+
+    #install-prompt p {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #2d2d2d;
+      line-height: 1.3;
+    }
+
+    #install-prompt p span {
+      display: block;
+      font-weight: 400;
+      font-size: 0.82rem;
+      color: #b07a40;
+    }
+
+    #install-btn {
+      background: #ff9a3c;
+      color: white;
+      border: none;
+      border-radius: 2rem;
+      padding: 0.45rem 1rem;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 900;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    #install-dismiss {
+      background: none;
+      border: none;
+      font-size: 1.1rem;
+      color: #ccc;
+      cursor: pointer;
+      padding: 0 0.2rem;
+      flex-shrink: 0;
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .mic-btn.holding { animation: none; }
       #more-bubble { animation: none; }
@@ -301,6 +374,13 @@
   </style>
 </head>
 <body>
+  <div id="install-prompt">
+    <img src="/icon-192.png" alt="">
+    <p>Add to Home Screen<span>Ask questions anytime!</span></p>
+    <button id="install-btn">Add</button>
+    <button id="install-dismiss" aria-label="Dismiss">✕</button>
+  </div>
+
   <div id="stars"></div>
 
   <div id="answer-wrap">
@@ -601,6 +681,48 @@
     micEl.addEventListener('pointerup', onRelease);
     micEl.addEventListener('pointercancel', onRelease);
     micEl.addEventListener('contextmenu', (e) => e.preventDefault());
+  })();
+
+  // ── Service worker + install prompt ──────────────────────────
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js');
+  }
+
+  (() => {
+    const prompt  = document.getElementById('install-prompt');
+    const btnAdd  = document.getElementById('install-btn');
+    const btnDism = document.getElementById('install-dismiss');
+    let deferredEvent = null;
+
+    const dismiss = () => { prompt.classList.remove('visible'); };
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredEvent = e;
+      setTimeout(() => prompt.classList.add('visible'), 2000);
+    });
+
+    btnAdd.addEventListener('click', async () => {
+      dismiss();
+      if (!deferredEvent) return;
+      deferredEvent.prompt();
+      await deferredEvent.userChoice;
+      deferredEvent = null;
+    });
+
+    btnDism.addEventListener('click', dismiss);
+
+    // iOS Safari hint — show if running in browser (not already installed)
+    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isStandalone = navigator.standalone;
+    if (isIos && !isStandalone) {
+      btnAdd.textContent = 'How?';
+      btnAdd.addEventListener('click', () => {
+        alert('Tap the Share button at the bottom of Safari, then choose "Add to Home Screen".');
+        dismiss();
+      }, { once: true });
+      setTimeout(() => prompt.classList.add('visible'), 2000);
+    }
   })();
   </script>
 </body>

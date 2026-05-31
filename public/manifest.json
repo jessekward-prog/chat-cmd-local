@@ -1,0 +1,15 @@
+{
+  "name": "Ask Away!",
+  "short_name": "Ask Away",
+  "description": "Ask anything — a friendly helper for curious kids",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff7f0",
+  "theme_color": "#ff9a3c",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon.svg",     "sizes": "any",      "type": "image/svg+xml" }
+  ]
+}
